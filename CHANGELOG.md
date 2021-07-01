@@ -2,6 +2,74 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [6.1.1](https://github.com/webpack-contrib/postcss-loader/compare/v6.1.0...v6.1.1) (2021-07-01)
+
+
+### Bug Fixes
+
+* do not swallow exception from postcss ([2eec42b](https://github.com/webpack-contrib/postcss-loader/commit/2eec42b1a61bbafa039627d3071ba2a1be03de9f))
+
+## [6.1.0](https://github.com/webpack-contrib/postcss-loader/compare/v6.0.0...v6.1.0) (2021-06-10)
+
+
+### Features
+
+* allow `String` value for the "implementation" option ([0d342b1](https://github.com/webpack-contrib/postcss-loader/commit/0d342b16dabf58c499da4e13310fdfa5c05badd9))
+
+## [6.0.0](https://github.com/webpack-contrib/postcss-loader/compare/v5.3.0...v6.0.0) (2021-06-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* minimum supported `Node.js` version is `12.13.0` (#526)
+
+### Bug Fixes
+
+* check postcss as project dependency ([570db67](https://github.com/webpack-contrib/postcss-loader/commit/570db6726e4f86c966bc35c13637e0aad00f7a1a))
+
+
+## [5.3.0](https://github.com/webpack-contrib/postcss-loader/compare/v5.2.0...v5.3.0) (2021-05-14)
+
+
+### Features
+
+* add support for `dir-dependency` message type ([#524](https://github.com/webpack-contrib/postcss-loader/issues/524)) ([91dea60](https://github.com/webpack-contrib/postcss-loader/commit/91dea607623d3f9a2c3f7c989243934ba5274296))
+
+## [5.2.0](https://github.com/webpack-contrib/postcss-loader/compare/v5.1.0...v5.2.0) (2021-03-11)
+
+
+### Features
+
+* support `ecma` modules for the 'parser', 'stringifier' and 'syntax' options ([#519](https://github.com/webpack-contrib/postcss-loader/issues/519)) ([cc69754](https://github.com/webpack-contrib/postcss-loader/commit/cc69754383f6f9881ac5f02ec489eb89db2cfb0d))
+
+## [5.1.0](https://github.com/webpack-contrib/postcss-loader/compare/v5.0.0...v5.1.0) (2021-03-05)
+
+
+### Features
+
+* added support for registering `context`, `build` and `missing` dependencies ([#518](https://github.com/webpack-contrib/postcss-loader/issues/518)) ([9ce4972](https://github.com/webpack-contrib/postcss-loader/commit/9ce4972c6740c8dd82463fff0934987695ccf7d2)), please read [docs](https://github.com/webpack-contrib/postcss-loader#add-dependencies-contextdependencies-builddependencies-missingdependencies)
+
+## [5.0.0](https://github.com/webpack-contrib/postcss-loader/compare/v4.2.0...v5.0.0) (2021-02-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* minimum supported `webpack` version is `5`
+
+## [4.2.0](https://github.com/webpack-contrib/postcss-loader/compare/v4.1.0...v4.2.0) (2021-01-21)
+
+
+### Features
+
+* added the `implementation` option ([#511](https://github.com/webpack-contrib/postcss-loader/issues/511)) ([deac978](https://github.com/webpack-contrib/postcss-loader/commit/deac9787eed614b1c445f091a2b70736a6212812))
+
+## [4.1.0](https://github.com/webpack-contrib/postcss-loader/compare/v4.0.4...v4.1.0) (2020-11-19)
+
+
+### Features
+
+* partial compatibility with `postcss-cli`, added `api.env` (alias for `api.mode`) and `api.options` (contains options from the `postcssOptions` options), please look at the [example](https://github.com/webpack-contrib/postcss-loader#examples-of-config-files) for more details ([#498](https://github.com/webpack-contrib/postcss-loader/issues/498)) ([84a9c46](https://github.com/webpack-contrib/postcss-loader/commit/84a9c46467086df0185519ceb93bf66893af4cf2))
+
 ### [4.0.4](https://github.com/webpack-contrib/postcss-loader/compare/v4.0.3...v4.0.4) (2020-10-09)
 
 ### Chore

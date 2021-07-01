@@ -1,8 +1,8 @@
-import path from 'path';
-import Module from 'module';
+import path from "path";
+import Module from "module";
 
-import { klona } from 'klona/full';
-import { cosmiconfig } from 'cosmiconfig';
+import { klona } from "klona/full";
+import { cosmiconfig } from "cosmiconfig";
 
 const parentModule = module;
 
@@ -31,9 +31,9 @@ function exec(code, loaderContext) {
   return module.exports;
 }
 
-async function loadConfig(loaderContext, config) {
+async function loadConfig(loaderContext, config, postcssOptions) {
   const searchPath =
-    typeof config === 'string'
+    typeof config === "string"
       ? path.resolve(config)
       : path.dirname(loaderContext.resourcePath);
 
@@ -45,7 +45,7 @@ async function loadConfig(loaderContext, config) {
     throw new Error(`No PostCSS config found in: ${searchPath}`);
   }
 
-  const explorer = cosmiconfig('postcss');
+  const explorer = cosmiconfig("postcss");
 
   let result;
 
@@ -63,18 +63,21 @@ async function loadConfig(loaderContext, config) {
     return {};
   }
 
-  loaderContext.addDependency(result.filepath);
+  loaderContext.addBuildDependency(result.filepath);
 
   if (result.isEmpty) {
     return result;
   }
 
-  if (typeof result.config === 'function') {
+  if (typeof result.config === "function") {
     const api = {
       mode: loaderContext.mode,
       file: loaderContext.resourcePath,
       // For complex use
       webpackLoaderContext: loaderContext,
+      // Partial compatibility with `postcss-cli`
+      env: loaderContext.mode,
+      options: postcssOptions || {},
     };
 
     result.config = result.config(api);
@@ -117,7 +120,7 @@ function pluginFactory() {
   const listOfPlugins = new Map();
 
   return (plugins) => {
-    if (typeof plugins === 'undefined') {
+    if (typeof plugins === "undefined") {
       return listOfPlugins;
     }
 
@@ -127,13 +130,13 @@ function pluginFactory() {
           const [name, options] = plugin;
 
           listOfPlugins.set(name, options);
-        } else if (plugin && typeof plugin === 'function') {
+        } else if (plugin && typeof plugin === "function") {
           listOfPlugins.set(plugin);
         } else if (
           plugin &&
           Object.keys(plugin).length === 1 &&
-          (typeof plugin[Object.keys(plugin)[0]] === 'object' ||
-            typeof plugin[Object.keys(plugin)[0]] === 'boolean') &&
+          (typeof plugin[Object.keys(plugin)[0]] === "object" ||
+            typeof plugin[Object.keys(plugin)[0]] === "boolean") &&
           plugin[Object.keys(plugin)[0]] !== null
         ) {
           const [name] = Object.keys(plugin);
@@ -164,7 +167,35 @@ function pluginFactory() {
   };
 }
 
-function getPostcssOptions(
+async function load(module) {
+  let exports;
+
+  try {
+    // eslint-disable-next-line import/no-dynamic-require, global-require
+    exports = require(module);
+
+    return exports;
+  } catch (requireError) {
+    let importESM;
+
+    try {
+      // eslint-disable-next-line no-new-func
+      importESM = new Function("id", "return import(id);");
+    } catch (e) {
+      importESM = null;
+    }
+
+    if (requireError.code === "ERR_REQUIRE_ESM" && importESM) {
+      exports = await importESM(module);
+
+      return exports.default;
+    }
+
+    throw requireError;
+  }
+}
+
+async function getPostcssOptions(
   loaderContext,
   loadedConfig = {},
   postcssOptions = {}
@@ -173,7 +204,7 @@ function getPostcssOptions(
 
   let normalizedPostcssOptions = postcssOptions;
 
-  if (typeof normalizedPostcssOptions === 'function') {
+  if (typeof normalizedPostcssOptions === "function") {
     normalizedPostcssOptions = normalizedPostcssOptions(loaderContext);
   }
 
@@ -191,7 +222,7 @@ function getPostcssOptions(
     plugins = [...factory()].map((item) => {
       const [plugin, options] = item;
 
-      if (typeof plugin === 'string') {
+      if (typeof plugin === "string") {
         return loadPlugin(plugin, options, file);
       }
 
@@ -248,10 +279,9 @@ function getPostcssOptions(
     ...processOptionsFromOptions,
   };
 
-  if (typeof processOptions.parser === 'string') {
+  if (typeof processOptions.parser === "string") {
     try {
-      // eslint-disable-next-line import/no-dynamic-require, global-require
-      processOptions.parser = require(processOptions.parser);
+      processOptions.parser = await load(processOptions.parser);
     } catch (error) {
       loaderContext.emitError(
         new Error(
@@ -261,10 +291,9 @@ function getPostcssOptions(
     }
   }
 
-  if (typeof processOptions.stringifier === 'string') {
+  if (typeof processOptions.stringifier === "string") {
     try {
-      // eslint-disable-next-line import/no-dynamic-require, global-require
-      processOptions.stringifier = require(processOptions.stringifier);
+      processOptions.stringifier = await load(processOptions.stringifier);
     } catch (error) {
       loaderContext.emitError(
         new Error(
@@ -274,10 +303,9 @@ function getPostcssOptions(
     }
   }
 
-  if (typeof processOptions.syntax === 'string') {
+  if (typeof processOptions.syntax === "string") {
     try {
-      // eslint-disable-next-line import/no-dynamic-require, global-require
-      processOptions.syntax = require(processOptions.syntax);
+      processOptions.syntax = await load(processOptions.syntax);
     } catch (error) {
       loaderContext.emitError(
         new Error(
@@ -299,19 +327,19 @@ const IS_NATIVE_WIN32_PATH = /^[a-z]:[/\\]|^\\\\/i;
 const ABSOLUTE_SCHEME = /^[a-z0-9+\-.]+:/i;
 
 function getURLType(source) {
-  if (source[0] === '/') {
-    if (source[1] === '/') {
-      return 'scheme-relative';
+  if (source[0] === "/") {
+    if (source[1] === "/") {
+      return "scheme-relative";
     }
 
-    return 'path-absolute';
+    return "path-absolute";
   }
 
   if (IS_NATIVE_WIN32_PATH.test(source)) {
-    return 'path-absolute';
+    return "path-absolute";
   }
 
-  return ABSOLUTE_SCHEME.test(source) ? 'absolute' : 'path-relative';
+  return ABSOLUTE_SCHEME.test(source) ? "absolute" : "path-relative";
 }
 
 function normalizeSourceMap(map, resourceContext) {
@@ -319,7 +347,7 @@ function normalizeSourceMap(map, resourceContext) {
 
   // Some loader emit source map as string
   // Strip any JSON XSSI avoidance prefix from the string (as documented in the source maps specification), and then parse the string as JSON.
-  if (typeof newMap === 'string') {
+  if (typeof newMap === "string") {
     newMap = JSON.parse(newMap);
   }
 
@@ -334,9 +362,9 @@ function normalizeSourceMap(map, resourceContext) {
       const sourceType = getURLType(source);
 
       // Do no touch `scheme-relative` and `absolute` URLs
-      if (sourceType === 'path-relative' || sourceType === 'path-absolute') {
+      if (sourceType === "path-relative" || sourceType === "path-absolute") {
         const absoluteSource =
-          sourceType === 'path-relative' && sourceRoot
+          sourceType === "path-relative" && sourceRoot
             ? path.resolve(sourceRoot, path.normalize(source))
             : path.normalize(source);
 
@@ -359,18 +387,18 @@ function normalizeSourceMapAfterPostcss(map, resourceContext) {
   delete newMap.file;
 
   // eslint-disable-next-line no-param-reassign
-  newMap.sourceRoot = '';
+  newMap.sourceRoot = "";
 
   // eslint-disable-next-line no-param-reassign
   newMap.sources = newMap.sources.map((source) => {
-    if (source.indexOf('<') === 0) {
+    if (source.indexOf("<") === 0) {
       return source;
     }
 
     const sourceType = getURLType(source);
 
     // Do no touch `scheme-relative`, `path-absolute` and `absolute` types
-    if (sourceType === 'path-relative') {
+    if (sourceType === "path-relative") {
       return path.resolve(resourceContext, source);
     }
 
@@ -380,10 +408,58 @@ function normalizeSourceMapAfterPostcss(map, resourceContext) {
   return newMap;
 }
 
+function findPackageJSONDir(cwd, statSync) {
+  let dir = cwd;
+
+  for (;;) {
+    try {
+      if (statSync(path.join(dir, "package.json")).isFile()) {
+        break;
+      }
+    } catch (error) {
+      // Nothing
+    }
+
+    const parent = path.dirname(dir);
+
+    if (dir === parent) {
+      dir = null;
+      break;
+    }
+
+    dir = parent;
+  }
+
+  return dir;
+}
+
+function getPostcssImplementation(loaderContext, implementation) {
+  let resolvedImplementation = implementation;
+
+  if (!implementation || typeof implementation === "string") {
+    const postcssImplPkg = implementation || "postcss";
+
+    try {
+      // eslint-disable-next-line import/no-dynamic-require, global-require
+      resolvedImplementation = require(postcssImplPkg);
+    } catch (error) {
+      loaderContext.emitError(error);
+
+      // eslint-disable-next-line consistent-return
+      return;
+    }
+  }
+
+  // eslint-disable-next-line consistent-return
+  return resolvedImplementation;
+}
+
 export {
   loadConfig,
   getPostcssOptions,
   exec,
   normalizeSourceMap,
   normalizeSourceMapAfterPostcss,
+  findPackageJSONDir,
+  getPostcssImplementation,
 };
